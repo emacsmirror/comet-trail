@@ -3,7 +3,7 @@
 ;; Author: Andros Fenollosa <hi@andros.dev>
 ;; Maintainer: Andros Fenollosa <hi@andros.dev>
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: faces, convenience
 ;; URL: https://git.andros.dev/andros/comet.el
 
@@ -92,10 +92,13 @@ Movements shorter than this are ignored to reduce visual noise."
   :group 'comet)
 
 (defvar-local comet--overlays nil
-  "List of overlays created by comet for the current buffer.")
+  "List of active overlays used by the current animation frame.")
+
+(defvar-local comet--overlay-pool nil
+  "Pool of reusable overlays to avoid allocation per frame.")
 
 (defvar-local comet--animations nil
-  "List of active comet animations, each a vector [PATH START-TIME].")
+  "List of active comet animations, each a vector [PATH START-TIME PALETTE].")
 
 (defvar-local comet--anim-timer nil
   "Timer for comet animations.")
@@ -173,10 +176,7 @@ Uses Bresenham's line algorithm."
 (defun comet-clear ()
   "Remove all comet overlays from the current buffer."
   (interactive)
-  (dolist (ov comet--overlays)
-    (when (overlayp ov)
-      (delete-overlay ov)))
-  (setq comet--overlays nil))
+  (comet--pool-clear))
 
 (defun comet--compute-path (pos1 pos2 &optional window)
   "Compute a vector of buffer positions along a line from POS1 to POS2.
@@ -251,49 +251,89 @@ Returns a hex color string."
       (face-background 'cursor nil t)
       "#f0c674"))
 
+;;; --- Overlay pool ---
+
+(defun comet--pool-get (pos)
+  "Get an overlay at POS, reusing from pool or creating a new one."
+  (let ((ov (pop comet--overlay-pool)))
+    (if ov
+        (progn (move-overlay ov pos (1+ pos)) ov)
+      (let ((new-ov (make-overlay pos (1+ pos))))
+        (overlay-put new-ov 'comet t)
+        (overlay-put new-ov 'priority 100)
+        new-ov))))
+
+(defun comet--pool-release (ov)
+  "Return OV to the overlay pool for reuse."
+  (overlay-put ov 'face nil)
+  (move-overlay ov 1 1)
+  (push ov comet--overlay-pool))
+
+(defun comet--pool-clear ()
+  "Delete all overlays in both active list and pool."
+  (dolist (ov comet--overlays)
+    (when (overlayp ov) (delete-overlay ov)))
+  (setq comet--overlays nil)
+  (dolist (ov comet--overlay-pool)
+    (when (overlayp ov) (delete-overlay ov)))
+  (setq comet--overlay-pool nil))
+
+;;; --- Pre-computed color palette ---
+
+(defun comet--compute-palette ()
+  "Pre-compute a vector of colors for the comet gradient.
+Index 0 is the head (brightest), last index is the tail (dimmest)."
+  (let* ((bg (comet--bg-color))
+         (hi (comet--highlight-color))
+         (len comet-comet-length)
+         (colors (make-vector len nil)))
+    (dotimes (i len)
+      (let* ((linear (if (> len 1)
+                         (- 1.0 (/ (float i) (1- len)))
+                       1.0))
+             (brightness (expt linear comet-fade-exponent)))
+        (aset colors i (comet--lerp-color bg hi brightness))))
+    colors))
+
 ;;; --- Comet animation engine ---
 
 (defun comet--comet-tick ()
   "Advance all active comet animations by one frame."
-  (dolist (ov comet--overlays)
-    (when (overlayp ov) (delete-overlay ov)))
-  (setq comet--overlays nil)
-  (let ((now (float-time))
-        (hi (comet--highlight-color))
-        (bg (comet--bg-color))
-        (comet-len comet-comet-length)
-        (alive nil))
-    (dolist (anim comet--animations)
-      (let* ((path (aref anim 0))
-             (start-time (aref anim 1))
-             (path-len (length path))
-             (elapsed (- now start-time))
-             (speed (/ (float path-len) comet-comet-speed))
-             (head (floor (* elapsed speed)))
-             (tail (- head comet-len)))
-        (if (>= tail path-len)
-            nil
-          (push anim alive)
-          (let ((vis-start (max 0 tail))
-                (vis-end (min head path-len)))
-            (when (> vis-end vis-start)
-              (dotimes (i (- vis-end vis-start))
-                (let* ((idx (+ vis-start i))
-                       (buf-pos (aref path idx))
-                       (dist (- head idx 1))
-                       (linear (max 0.0 (- 1.0 (/ (float dist)
-                                                   (max 1 (1- comet-len))))))
-                       (brightness (expt linear comet-fade-exponent))
-                       (col (comet--lerp-color bg hi brightness)))
-                  (when col
-                    (let ((ov (make-overlay buf-pos (1+ buf-pos))))
-                      (overlay-put ov 'face `(:background ,col))
-                      (overlay-put ov 'comet t)
-                      (overlay-put ov 'priority 100)
-                      (push ov comet--overlays))))))))))
-    (setq comet--animations (nreverse alive))
-    (when (null comet--animations)
-      (comet--anim-stop))))
+  (let ((inhibit-redisplay t))
+    ;; Return current overlays to pool.
+    (dolist (ov comet--overlays)
+      (comet--pool-release ov))
+    (setq comet--overlays nil)
+    (let ((now (float-time))
+          (comet-len comet-comet-length)
+          (alive nil))
+      (dolist (anim comet--animations)
+        (let* ((path (aref anim 0))
+               (start-time (aref anim 1))
+               (palette (aref anim 2))
+               (path-len (length path))
+               (elapsed (- now start-time))
+               (speed (/ (float path-len) comet-comet-speed))
+               (head (floor (* elapsed speed)))
+               (tail (- head comet-len)))
+          (if (>= tail path-len)
+              nil
+            (push anim alive)
+            (let ((vis-start (max 0 tail))
+                  (vis-end (min head path-len)))
+              (when (> vis-end vis-start)
+                (dotimes (i (- vis-end vis-start))
+                  (let* ((idx (+ vis-start i))
+                         (buf-pos (aref path idx))
+                         (dist (- head idx 1))
+                         (color-idx (min dist (1- comet-len)))
+                         (col (aref palette color-idx))
+                         (ov (comet--pool-get buf-pos)))
+                    (overlay-put ov 'face `(:background ,col))
+                    (push ov comet--overlays))))))))
+      (setq comet--animations (nreverse alive))
+      (when (null comet--animations)
+        (comet--anim-stop)))))
 
 (defun comet--anim-start ()
   "Start the animation timer if not already running."
@@ -338,7 +378,8 @@ Returns a hex color string."
                (pos-visible-in-window-p pos))
       (let ((path (comet--compute-path comet--last-pos pos)))
         (when (and path (>= (length path) comet-minimum-distance))
-          (push (vector path (float-time)) comet--animations)
+          (push (vector path (float-time) (comet--compute-palette))
+                comet--animations)
           (comet--anim-start))))
     (setq comet--last-pos pos)))
 
@@ -356,7 +397,7 @@ Works with both keyboard and mouse."
         (add-hook 'post-command-hook #'comet--trail-hook nil t))
     (remove-hook 'post-command-hook #'comet--trail-hook t)
     (comet--anim-stop)
-    (comet-clear)
+    (comet--pool-clear)
     (setq comet--animations nil)
     (setq comet--last-pos nil)))
 

@@ -8,7 +8,7 @@ old and new positions, then fades away.
 Works with both keyboard and mouse movement. Correctly handles visual
 line wrapping (`visual-line-mode`, `word-wrap`, `toggle-truncate-lines`).
 
-Requires Emacs 27.1 or later.
+Requires Emacs 29.1 or later.
 
 <video src="https://git.andros.dev/andros/comet.el/media/branch/main/demo.mp4" autoplay muted loop controls></video>
 
