@@ -1,22 +1,46 @@
 ;;; comet.el --- Cursor comet trail effect  -*- lexical-binding: t -*-
 
 ;; Author: Andros
+;; Maintainer: Andros
 ;; Version: 1.0.0
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: faces, convenience
 ;; URL: https://git.andros.dev/andros/comet.el
 
+;; This file is not part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;;; Commentary:
 
-;; This package highlights the background of characters that fall along
-;; a geometric line drawn between two buffer positions.  It correctly
-;; handles visual line wrapping (visual-line-mode, word-wrap,
-;; toggle-truncate-lines).
+;; This package provides a comet trail effect for the cursor.  When
+;; the cursor moves, a short animated comet travels along the
+;; geometric line between the old and new positions.
+;;
+;; It highlights the background of characters that fall along the
+;; path, correctly handling visual line wrapping
+;; (`visual-line-mode', word-wrap, `toggle-truncate-lines').
 ;;
 ;; The core idea: given two buffer positions, compute their visual
 ;; (column, row) coordinates on screen, trace a line between them
 ;; using Bresenham's algorithm, then map each cell back to a buffer
-;; position and apply an overlay.
+;; position and animate a sliding comet with ease-out brightness.
+;;
+;; Usage:
+;;
+;;   (require 'comet)
+;;   (add-hook 'prog-mode-hook #'comet-trail-mode)
 
 ;;; Code:
 
@@ -145,6 +169,7 @@ Uses Bresenham's line algorithm."
 
 ;;; --- Core API ---
 
+;;;###autoload
 (defun comet-clear ()
   "Remove all comet overlays from the current buffer."
   (interactive)
@@ -174,6 +199,7 @@ Returns nil if either position is not visible."
               (push buf-pos positions))))
         (vconcat (nreverse positions))))))
 
+;;;###autoload
 (defun comet-draw (pos1 pos2 &optional face window)
   "Draw a static highlighted line between buffer positions POS1 and POS2.
 FACE defaults to `comet-face'.  WINDOW defaults to selected window.
