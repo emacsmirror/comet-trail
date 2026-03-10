@@ -10,6 +10,8 @@ line wrapping (`visual-line-mode`, `word-wrap`, `toggle-truncate-lines`).
 
 Requires Emacs 27.1 or later.
 
+https://git.andros.dev/andros/comet.el/media/branch/main/demo.mp4
+
 How it works
 ------------
 
