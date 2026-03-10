@@ -10,7 +10,7 @@ line wrapping (`visual-line-mode`, `word-wrap`, `toggle-truncate-lines`).
 
 Requires Emacs 27.1 or later.
 
-<video src="https://git.andros.dev/andros/comet.el/media/branch/main/demo.mp4" controls></video>
+<video src="https://git.andros.dev/andros/comet.el/media/branch/main/demo.mp4" autoplay muted loop controls></video>
 
 How it works
 ------------
