@@ -37,7 +37,7 @@ Recommended method for Emacs 29 and later:
 
 ### use-package with :load-path
 
-For manual installation or Emacs < 29:
+For manual installation:
 
     (use-package comet
       :load-path "/path/to/comet.el"
