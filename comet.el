@@ -1,7 +1,7 @@
 ;;; comet.el --- Cursor comet trail effect  -*- lexical-binding: t -*-
 
-;; Author: Andros
-;; Maintainer: Andros
+;; Author: Andros Fenollosa <hi@andros.dev>
+;; Maintainer: Andros Fenollosa <hi@andros.dev>
 ;; Version: 1.0.0
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: faces, convenience
