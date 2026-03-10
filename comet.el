@@ -318,11 +318,22 @@ Returns a hex color string."
 (defvar-local comet--last-pos nil
   "Last cursor position tracked by `comet-trail-mode'.")
 
+(defvar comet--ignored-commands
+  '(self-insert-command
+    delete-char delete-backward-char
+    backward-delete-char-untabify
+    newline newline-and-indent open-line
+    yank yank-pop
+    kill-region kill-line kill-word backward-kill-word
+    undo undo-redo)
+  "Commands that should not trigger a comet animation.")
+
 (defun comet--trail-hook ()
   "Hook function that launches a comet from previous to current cursor position."
   (let ((pos (point)))
     (when (and comet--last-pos
                (/= pos comet--last-pos)
+               (not (memq this-command comet--ignored-commands))
                (pos-visible-in-window-p comet--last-pos)
                (pos-visible-in-window-p pos))
       (let ((path (comet--compute-path comet--last-pos pos)))
