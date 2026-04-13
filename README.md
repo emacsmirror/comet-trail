@@ -1,5 +1,5 @@
-comet.el
-========
+comet-trail.el
+==============
 
 Cursor comet trail effect for Emacs. When you move the cursor, a comet
 of highlighted characters travels along the geometric line between the
@@ -10,7 +10,7 @@ line wrapping (`visual-line-mode`, `word-wrap`, `toggle-truncate-lines`).
 
 Requires Emacs 29.1 or later.
 
-<video src="https://git.andros.dev/andros/comet.el/media/branch/main/demo.mp4" autoplay muted loop controls></video>
+<video src="https://git.andros.dev/andros/comet-trail.el/media/branch/main/demo.mp4" autoplay muted loop controls></video>
 
 How it works
 ------------
@@ -28,8 +28,8 @@ Installation
 
 Recommended method for Emacs 29 and later:
 
-    (use-package comet
-      :vc (:url "https://git.andros.dev/andros/comet.el"
+    (use-package comet-trail
+      :vc (:url "https://git.andros.dev/andros/comet-trail.el"
            :rev :newest)
       :config
       (add-hook 'prog-mode-hook #'comet-trail-mode)
@@ -39,8 +39,8 @@ Recommended method for Emacs 29 and later:
 
 For manual installation:
 
-    (use-package comet
-      :load-path "/path/to/comet.el"
+    (use-package comet-trail
+      :load-path "/path/to/comet-trail.el"
       :config
       (add-hook 'prog-mode-hook #'comet-trail-mode)
       (add-hook 'text-mode-hook #'comet-trail-mode))
@@ -49,17 +49,17 @@ For manual installation:
 
 Clone the repository and place the file in a directory on your `load-path`:
 
-    git clone https://git.andros.dev/andros/comet.el.git
+    git clone https://git.andros.dev/andros/comet-trail.el.git
 
 Then add to your `user-init-file`:
 
-    (add-to-list 'load-path "/path/to/comet.el")
-    (autoload 'comet-trail-mode "comet" nil t)
+    (add-to-list 'load-path "/path/to/comet-trail.el")
+    (autoload 'comet-trail-mode "comet-trail" nil t)
 
 Or, to load it immediately at startup:
 
-    (add-to-list 'load-path "/path/to/comet.el")
-    (require 'comet)
+    (add-to-list 'load-path "/path/to/comet-trail.el")
+    (require 'comet-trail)
     (add-hook 'prog-mode-hook #'comet-trail-mode)
 
 Usage
@@ -71,29 +71,29 @@ active.
 
 Additional commands:
 
-- `comet-draw`: Draw a static highlighted line between two positions
-  (works on the active region with `M-x comet-draw`).
-- `comet-clear`: Remove all comet overlays from the current buffer.
+- `comet-trail-draw`: Draw a static highlighted line between two positions
+  (works on the active region with `M-x comet-trail-draw`).
+- `comet-trail-clear`: Remove all comet overlays from the current buffer.
 
 Customization
 -------------
 
-Run `M-x customize-group RET comet RET` to list all available options.
+Run `M-x customize-group RET comet-trail RET` to list all available options.
 
 Key options:
 
-- `comet-comet-length` (default `4`): Number of characters visible in
+- `comet-trail-length` (default `4`): Number of characters visible in
   the comet trail.
-- `comet-comet-speed` (default `0.3`): Duration in seconds for the
+- `comet-trail-speed` (default `0.3`): Duration in seconds for the
   comet to traverse the full path.
-- `comet-fade-exponent` (default `2.0`): Brightness falloff curve.
+- `comet-trail-fade-exponent` (default `2.0`): Brightness falloff curve.
   `1.0` is linear, `2.0` is quadratic ease-out (recommended), `3.0`
   is cubic (sharper tail).
-- `comet-minimum-distance` (default `2`): Minimum movement in cells to
+- `comet-trail-minimum-distance` (default `2`): Minimum movement in cells to
   trigger an animation. Avoids visual noise on small cursor jumps.
-- `comet-tick-interval` (default `0.016`): Seconds between animation
+- `comet-trail-tick-interval` (default `0.016`): Seconds between animation
   frames (approximately 60fps).
-- `comet-face` (default `comet-highlight`): Face used for the comet
+- `comet-trail-face` (default `comet-trail-highlight`): Face used for the comet
   color. Set to `nil` to inherit the cursor color automatically.
 
 The default highlight color is `#f0c674` (warm yellow) on dark themes
