@@ -1,5 +1,4 @@
-comet-trail.el
-==============
+# comet-trail.el
 
 Cursor comet trail effect for Emacs. When you move the cursor, a comet
 of highlighted characters travels along the geometric line between the
@@ -12,8 +11,7 @@ Requires Emacs 29.1 or later.
 
 <video src="https://git.andros.dev/andros/comet-trail.el/media/branch/main/demo.mp4" autoplay muted loop controls></video>
 
-How it works
-------------
+## How it works
 
 Given two buffer positions, the package computes their visual (column,
 row) coordinates on screen, traces a line between them using
@@ -21,49 +19,63 @@ Bresenham's algorithm, maps each cell back to a buffer position, and
 animates a comet sliding along that path with an ease-out brightness
 gradient.
 
-Installation
-------------
+## Installation
+
+### MELPA
+
+```
+M-x package-install RET comet-trail RET
+```
 
 ### use-package with :vc (Emacs 29+)
 
 Recommended method for Emacs 29 and later:
 
-    (use-package comet-trail
-      :vc (:url "https://git.andros.dev/andros/comet-trail.el"
-           :rev :newest)
-      :config
-      (add-hook 'prog-mode-hook #'comet-trail-mode)
-      (add-hook 'text-mode-hook #'comet-trail-mode))
+```elisp
+(use-package comet-trail
+  :vc (:url "https://git.andros.dev/andros/comet-trail.el"
+       :rev :newest)
+  :config
+  (add-hook 'prog-mode-hook #'comet-trail-mode)
+  (add-hook 'text-mode-hook #'comet-trail-mode))
+```
 
 ### use-package with :load-path
 
 For manual installation:
 
-    (use-package comet-trail
-      :load-path "/path/to/comet-trail.el"
-      :config
-      (add-hook 'prog-mode-hook #'comet-trail-mode)
-      (add-hook 'text-mode-hook #'comet-trail-mode))
+```elisp
+(use-package comet-trail
+  :load-path "/path/to/comet-trail.el"
+  :config
+  (add-hook 'prog-mode-hook #'comet-trail-mode)
+  (add-hook 'text-mode-hook #'comet-trail-mode))
+```
 
 ### Manual
 
 Clone the repository and place the file in a directory on your `load-path`:
 
-    git clone https://git.andros.dev/andros/comet-trail.el.git
+```sh
+git clone https://git.andros.dev/andros/comet-trail.el.git
+```
 
 Then add to your `user-init-file`:
 
-    (add-to-list 'load-path "/path/to/comet-trail.el")
-    (autoload 'comet-trail-mode "comet-trail" nil t)
+```elisp
+(add-to-list 'load-path "/path/to/comet-trail.el")
+(autoload 'comet-trail-mode "comet-trail" nil t)
+```
 
 Or, to load it immediately at startup:
 
-    (add-to-list 'load-path "/path/to/comet-trail.el")
-    (require 'comet-trail)
-    (add-hook 'prog-mode-hook #'comet-trail-mode)
+```elisp
+(add-to-list 'load-path "/path/to/comet-trail.el")
+(require 'comet-trail)
+(add-hook 'prog-mode-hook #'comet-trail-mode)
+```
 
-Usage
------
+## Usage
 
 Run `M-x comet-trail-mode RET` to toggle the effect in the current
 buffer. The mode indicator `Trail` appears in the mode line when
@@ -75,8 +87,7 @@ Additional commands:
   (works on the active region with `M-x comet-trail-draw`).
 - `comet-trail-clear`: Remove all comet overlays from the current buffer.
 
-Customization
--------------
+## Customization
 
 Run `M-x customize-group RET comet-trail RET` to list all available options.
 
@@ -99,13 +110,11 @@ Key options:
 The default highlight color is `#f0c674` (warm yellow) on dark themes
 and `#c678dd` (purple) on light themes.
 
-Contributing
-------------
+## Contributing
 
 Contributions are welcome! Please see the [contribution guidelines](https://git.andros.dev/andros/contribute) for instructions on how to submit issues or pull requests.
 
-License
--------
+## License
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
