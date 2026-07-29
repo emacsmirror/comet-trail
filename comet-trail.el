@@ -2,7 +2,7 @@
 
 ;; Author: Andros Fenollosa <hi@andros.dev>
 ;; Maintainer: Andros Fenollosa <hi@andros.dev>
-;; Version: 1.0.0
+;; Version: 1.0.1
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: faces, convenience
 ;; URL: https://git.andros.dev/andros/comet-trail.el
@@ -103,6 +103,14 @@ Movements shorter than this are ignored to reduce visual noise."
 
 (defvar-local comet-trail--anim-timer nil
   "Timer for comet animations.")
+
+(defvar-local comet-trail--buffer nil
+  "Buffer that owns the current internal animation state.
+Indirect buffers created with a non-nil CLONE argument to
+`make-indirect-buffer' (as `org-tree-to-indirect-buffer' does)
+inherit buffer-local variables from their base buffer, including
+the animation timer and the overlay pool.  This variable is used
+to detect that inherited state so it can be discarded.")
 
 ;;; --- Visual coordinate helpers ---
 
@@ -372,8 +380,22 @@ Index 0 is the head (brightest), last index is the tail (dimmest)."
     undo undo-redo)
   "Commands that should not trigger a comet animation.")
 
+(defun comet-trail--claim-buffer ()
+  "Discard internal state inherited from another buffer.
+The inherited timer and overlays still belong to the base buffer
+and are in use there, so only the references are dropped, without
+cancelling the timer or deleting the overlays."
+  (unless (eq comet-trail--buffer (current-buffer))
+    (setq comet-trail--overlays nil
+          comet-trail--overlay-pool nil
+          comet-trail--animations nil
+          comet-trail--anim-timer nil
+          comet-trail--last-pos nil
+          comet-trail--buffer (current-buffer))))
+
 (defun comet-trail--hook ()
   "Launch a comet from previous to current cursor position."
+  (comet-trail--claim-buffer)
   (let ((pos (point)))
     (when (and comet-trail--last-pos
                (/= pos comet-trail--last-pos)
@@ -397,8 +419,10 @@ Works with both keyboard and mouse."
   :group 'comet-trail
   (if comet-trail-mode
       (progn
+        (comet-trail--claim-buffer)
         (setq comet-trail--last-pos (point))
         (add-hook 'post-command-hook #'comet-trail--hook nil t))
+    (comet-trail--claim-buffer)
     (remove-hook 'post-command-hook #'comet-trail--hook t)
     (comet-trail--anim-stop)
     (comet-trail--pool-clear)
